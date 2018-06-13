@@ -22,8 +22,8 @@ class TestWebRequestApp extends App.AppBase
             mem[i] = new[210];
         }
         
-        Sys.println("\r\nstarting WatchApp: " + strTimeOfDay(true)); //log when we started
         AppBase.initialize();
+        Sys.println("\nstarting WatchApp: " + strTimeOfDay(true)); //log when we started
         timer.start(method(:onTimerTic),DurUpdScreen,true);
     }
 
@@ -37,7 +37,11 @@ class TestWebRequestApp extends App.AppBase
     function onStart(x){}
 
     //---------------------------------
-    function onStop(x){}
+    function onStop(x)
+    {
+        Sys.println("total requests: " + view.cRequest);
+        Sys.println("errors: " + view.cErr);
+    }
 
     //---------------------------------
     function getInitialView() 

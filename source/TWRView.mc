@@ -70,6 +70,7 @@ class TestWebRequestView extends Ui.View
         {
             cErr++;
             tmRequest = null;
+            Sys.println(strTimeOfDay(true) + ", error=" + responseCode);
         }
     }
 

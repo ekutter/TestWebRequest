@@ -16,11 +16,11 @@ class TestWebRequestApp extends App.AppBase
     function initialize() 
     {
         //just take up some memory to see if that helps
-        mem = new [100];
-        for (var i = 0; i < mem.size(); ++i)
-        {
-            mem[i] = new[210];
-        }
+//        mem = new [100];
+//        for (var i = 0; i < mem.size(); ++i)
+//        {
+//            mem[i] = new[210];
+//        }
         
         AppBase.initialize();
         Sys.println("\nstarting WatchApp: " + strTimeOfDay(true)); //log when we started

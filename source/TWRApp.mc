@@ -23,7 +23,7 @@ class TestWebRequestApp extends App.AppBase
 //        }
         
         AppBase.initialize();
-        Sys.println("\nstarting WatchApp: " + strTimeOfDay(true)); //log when we started
+        Sys.println("\nstarting TestWebRequest: " + strTimeOfDay(true)); //log when we started
         timer.start(method(:onTimerTic),DurUpdScreen,true);
     }
 
@@ -39,8 +39,13 @@ class TestWebRequestApp extends App.AppBase
     //---------------------------------
     function onStop(x)
     {
-        Sys.println("total requests: " + view.cRequest);
+        Sys.println("RunTime: " + strDur(Sys.getTimer() - view.tmStart));
+        Sys.println("total successful responses: " + view.cResponse);
         Sys.println("errors: " + view.cErr);
+        Sys.println("time last Success: " + view.strLastSuccess);
+        Sys.println("boot time to last success: " + strDur(view.tmLastSuccess));
+        Sys.println("boot time: " + strDur(Sys.getTimer()));
+        Sys.println("Req Int: " + view.cReqInt);
     }
 
     //---------------------------------

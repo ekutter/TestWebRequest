@@ -1,3 +1,4 @@
+using Toybox.Application as App;
 using Toybox.WatchUi as Ui;
 using Toybox.Graphics;
 using Toybox.System as Sys;
@@ -15,24 +16,49 @@ class TestWebRequestView extends Ui.View
 
     var tmRequest = null;       //what was the time of the last request - null=no request pending
     var strLastSuccess = "--";  //what time did wwe last get a successful response
+    var tmLastSuccess = 0;      //effectively boot time to last success
     var tmStart;                //what time did we start the app
     var cRequest = 0;           //how many requests have been made
     var cErr = 0;               //how many error responses have we had
+    var cResponse;              //how many successful responses did we get
+    
+    var cReqInt = 3000; 
     
     //---------------------------------
     function initialize() 
     {
         tmStart = Sys.getTimer();
         View.initialize();
+        Sys.println("Req Int: " + cReqInt);
+        Sys.println("phone connected: " + Sys.getDeviceSettings().phoneConnected); 
+
+        cResponse = App.getApp().getProperty("cResponse");
+        if (cResponse == null) {cResponse = 0;}        
+
+        var tmResponse = App.getApp().getProperty("tmResponse");
+
+        if ((tmResponse == null) || (tmResponse > Sys.getTimer()))
+        {
+            Sys.println("reboot detected");
+            cResponse = 0;
+            App.getApp().setProperty("cResponse",0);
+            App.getApp().setProperty("tmResponse",0);
+        }
+        else
+        {
+            Sys.println("init cResponse: " + cResponse);
+        }
     }
 
     //---------------------------------
+    var tmLastReq = 0;
     function onTimerTic() //every second
     {
         //make a request if we don't have one pending
-        if (tmRequest == null)
+        if ((tmRequest == null) && (Sys.getTimer() > (tmLastReq+cReqInt)))
         {
             makeRequest();
+            tmLastReq = Sys.getTimer();
         }
         Ui.requestUpdate(); //update the display regardless
     }
@@ -42,9 +68,13 @@ class TestWebRequestView extends Ui.View
     var strMsg;
     function onReceive(responseCode, data) 
     {
-        //Sys.println("OnReceive");
+        Sys.println("OnReceive");
         if (responseCode == 200) 
         {
+            cResponse++;
+            App.getApp().setProperty("cResponse",cResponse);
+            App.getApp().setProperty("tmResponse",Sys.getTimer());
+        
             if (data instanceof Lang.String) 
             {
                 //Sys.println("string");
@@ -63,6 +93,7 @@ class TestWebRequestView extends Ui.View
             }
             tmRequest = null;
             strLastSuccess = strTimeOfDay(false);
+            tmLastSuccess = Sys.getTimer();
             //Sys.println(strMsg);
             Ui.requestUpdate();
         }
@@ -70,7 +101,10 @@ class TestWebRequestView extends Ui.View
         {
             cErr++;
             tmRequest = null;
-            Sys.println(strTimeOfDay(true) + ", error=" + responseCode);
+            if (cErr <= 10) //only print the first 10.  Fills up the log file after that
+            {
+                Sys.println(strTimeOfDay(true) + ", error=" + responseCode);
+            }
         }
     }
 
@@ -78,9 +112,9 @@ class TestWebRequestView extends Ui.View
     function makeRequest() 
     {
         //don't bother making the request if there is no phone connected
-        if (Sys.getDeviceSettings().phoneConnected)
+        //if (Sys.getDeviceSettings().phoneConnected)
         {
-            //Sys.println("MakeRequest");
+            Sys.println("MakeRequest");
             tmRequest = Sys.getTimer();
             cRequest++;
             
@@ -95,7 +129,7 @@ class TestWebRequestView extends Ui.View
     //---------------------------------
     //  display Lines
     //     Duration since app started
-    //     count of requests
+    //     count of successful responses since boot
     //     count of errors, current memory usage in k
     //     DurPend is time since the last request
     //     current clock time - time of last successful response
@@ -113,14 +147,15 @@ class TestWebRequestView extends Ui.View
         y += cyLine/4;
         dc.drawText(xCenter, y, fnt, strDur(Sys.getTimer() - tmStart), JC);
         y += cyLine;
-        dc.drawText(xCenter, y, fnt, "cReq=" + cRequest, JC);
+        dc.drawText(xCenter, y, fnt, "cRes=" + cResponse, JC);
         y += cyLine;
-        dc.drawText(xCenter, y, fnt, "cErr=" + cErr + ", m=" + (Sys.getSystemStats().usedMemory/1024) + "k", JC);
+        dc.drawText(xCenter, y, fnt, "cErr=" + cErr + ", int=" + Math.round(cReqInt/1000), JC);
         y += cyLine;
         dc.drawText(xCenter, y, fnt, "DurPend=" + 
           ((tmRequest != null) ? strDur(Sys.getTimer() - tmRequest) : "0:00"), JC);
         y += cyLine;
         dc.drawText(xCenter, y, fnt, strTimeOfDay(true) + " - " + strLastSuccess, JC);
         y += cyLine;
+        dc.drawText(xCenter, y, fnt, "boot:"+strDur(Sys.getTimer()), JC);
     }
 }
